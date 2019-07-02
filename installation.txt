@@ -1,0 +1,49 @@
+=========================================================================
+         CASANDRA INSTALLATION
+=========================================================================
+1.download the python form below url
+https://www.python.org/download/releases/2.7/
+
+2.install the python in the system and then set the 
+PYTHON_HOME in the path variable.
+
+PYTHON_HOME=C:\Python27
+adding to the path variable in the system 
+%PYTHON_HOME%;
+
+3.varify the python installation 
+drive:/>python -v
+
+4.DOWNLOAD THE CASANDRA FORM 
+http://cassandra.apache.org/download/
+then extract the zip in the desire location 
+then set the CASANDRA_HOME in the env variable
+CASANDRA_HOME=C:\apache-cassandra-3.5
+then add that to the path 
+%CASANDRA_HOME%\bin;
+
+5.Open the power shell and type following cmd
+"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+NOTE to close type exit
+ 
+6.execute this command on the power shell  
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+7.verify the cassandra installation
+drive:/>cassandra.bat
+drive:/>cqlsh.bat
+
+8.check the cassandra version.
+cqlsh:>SHOW VERSION
+o/p
+[cqlsh 5.0.1 | Cassandra 3.5 | CQL spec 3.4.0 | Native protocol v4]
+
+9.CASSANDRA LOG FILE LOCATIONS (create a logs dir inside the home)
+C:\SOFTWARE\apache-cassandra-3.5\logs\system.log
+
+10.CUSTOMIZING THE CASANDRA CONFIGURATIONS
+drive:/>apache-cassandra-3.5\conf\cassandra.yaml
+
+data_file_directories “/var/lib/cassandra/data”
+commitlog_directory “/var/lib/cassandra/commitlog”
+saved_caches_directory “/var/lib/cassandra/saved_caches”

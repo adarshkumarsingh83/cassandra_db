@@ -1,0 +1,437 @@
+
+
+=========================================================================
+         CASANDRA INSTALLATION
+=========================================================================
+1.download the python form below url
+https://www.python.org/download/releases/2.7/
+
+2.install the python in the system and then set the 
+PYTHON_HOME in the path variable.
+
+PYTHON_HOME=C:\Python27
+adding to the path variable in the system 
+%PYTHON_HOME%;
+
+3.varify the python installation 
+drive:/>python -v
+
+4.DOWNLOAD THE CASANDRA FORM 
+http://cassandra.apache.org/download/
+then extract the zip in the desire location 
+then set the CASANDRA_HOME in the env variable
+CASANDRA_HOME=C:\apache-cassandra-3.5
+then add that to the path 
+%CASANDRA_HOME%\bin;
+
+5.verify the cassandra installation
+drive:/>cassandra.bat
+drive:/>cqlsh.bat
+
+6.check the cassandra version.
+cqlsh:>SHOW VERSION
+o/p
+[cqlsh 5.0.1 | Cassandra 3.5 | CQL spec 3.4.0 | Native protocol v4]
+
+7.CASSANDRA LOG FILE LOCATIONS
+C:\SOFTWARE\apache-cassandra-3.5\logs\system.log
+
+8.CUSTOMIZING THE CASANDRA CONFIGURATIONS
+drive:/>apache-cassandra-3.5\conf\cassandra.yaml
+
+data_file_directories “/var/lib/cassandra/data”
+commitlog_directory “/var/lib/cassandra/commitlog”
+saved_caches_directory “/var/lib/cassandra/saved_caches”
+
+=========================================================================
+0)USER MANGAGEMENT 
+cqlsh>CREATE USER IF NOT EXISTS '<username>' WITH PASSWORD '<password>';
+
+cqlsh>DROP USER IF EXISTS '<username>' ;
+
+cqlsqh>GRANT <permission_name> PERMISSION
+| ( GRANT ALL PERMISSIONS ) ON <resource> TO <user_name>
+
+resource is one of these:
+--------------------------------
+ALL KEYSPACES
+KEYSPACE keyspace_name
+TABLE keyspace_name.table_name
+
+CQL Permissions
+--------------------------------
+ALL	         All statements
+ALTER	     ALTER KEYSPACE, ALTER TABLE, CREATE INDEX, DROP INDEX
+AUTHORIZE	 GRANT, REVOKE
+CREATE	     CREATE KEYSPACE, CREATE TABLE
+DROP	     DROP KEYSPACE, DROP TABLE
+MODIFY	     INSERT, DELETE, UPDATE, TRUNCATE
+SELECT	     SELECT
+
+cqlsh>REVOKE ( <permission_name> PERMISSION )
+           | ( REVOKE ALL PERMISSIONS ) ON <resource> FROM <user_name>
+		   
+cqlsh>LIST <permission_name> PERMISSION
+    | ( LIST ALL PERMISSIONS ) ON <resource> OF <user_name> NORECURSIVE;		   
+		   
+
+=========================================================================
+       CREATING THE USER DEFINE SCHEMA AND TABLE
+=========================================================================
+1) Create a KEYSPACE (Simmilar to NAMESPACE in relatonal database).
+   cqlsh> CREATE KEYSPACE espark 
+          WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+		  
+@Replication factor − It is the number of machines in the cluster that will receive copies of the same data
+@Replica placement strategy − It is nothing but the strategy to place replicas in the ring. We have strategies 
+ such as simple strategy (rack-aware strategy), old network topology strategy (rack-aware strategy), 
+ and network topology strategy (datacenter-shared strategy).
+
+-------------------------------------------------------------------------------------------------------------------------------
+2) Use created key space(espark).
+   cqlsh> USE ESPARK;
+
+-------------------------------------------------------------------------------------------------------------------------------
+3) Create table name (USERS) in key space espark, with columns ID, NAME, ADDRESS.
+   cqlsh:espark> CREATE TABLE ESPARK.USERS (
+                           ID int PRIMARY KEY
+                           ,NAME text
+                           ,ADDRESS text
+                         );
+-------------------------------------------------------------------------------------------------------------------------------
+4) Describe the table.
+  DESCRIBE ( CLUSTER | SCHEMA ) 
+|   KEYSPACES
+|  ( KEYSPACE keyspace_name )
+|  TABLES
+| ( TABLE table_name )
+
+cqlsh> DESCRIBE CLUSTER;
+cqlsh> DESCRIBE SCHEMA;
+cqlsh:>DESCRIBE TABLE ESPARK.USERS;
+cqlsh> DESCRIBE KEYSPACE ESPARK;
+
+						 
+4) Create data into USER table.
+    cqlsh:espark> INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (100, 'adarsh', 'INDIA');
+    cqlsh:espark> INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (101, 'radha', 'US');
+    cqlsh:espark> INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (102, 'amit', 'US');
+	
+-------------------------------------------------------------------------------------------------------------------------------
+5) Retrieve the data from USERS table,
+   cqlsh:espark> SELECT * FROM ESPARK.USERS;
+   
+ id  | address | name
+-----+---------+--------
+ 100 |   INDIA | adarsh
+ 102 |      US |   amit
+ 101 |      US |  radha
+
+cqlsh> SELECT * FROM ESPARK.USERS LIMIT 3;
+ id  | address | name
+-----+---------+--------
+ 105 |      US |  honey
+ 100 |   INDIA | adarsh
+ 104 |      US |   monu
+ 
+ cqlsh>SELECT * FROM ESPARK.USERS ORDER BY ID ASC;
+ 
+  cqlsh>SELECT * FROM ESPARK.USERS WHERE ID IN(100,200);
+-------------------------------------------------------------------------------------------------------------------------------
+
+6)CREATE CUSTOM INDEX index_name ON keyspace_name.table_name ( column_name ) (USING class_name) (WITH OPTIONS = map)
+cqlsh:espark> create index on users(name);
+-------------------------------------------------------------------------------------------------------------------------------
+7)LOADING DATA FROM SQL FILE.
+create a file with name db.sql in any location
+==================================espark.sql====================================
+INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (103, 'sonu', 'INDIA');
+INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (104, 'monu', 'US');
+INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS) VALUES (105, 'honey', 'US');
+================================================================================
+cqlsh> SOURCE 'C:\adarsh\espark.sql';
+
+o/p
+ id  | address | name
+-----+---------+--------
+ 105 |      US |  honey
+ 100 |   INDIA | adarsh
+ 104 |      US |   monu
+ 102 |      US |   amit
+ 101 |      US |  radha
+ 103 |   INDIA |   sonu
+
+-------------------------------------------------------------------------------------------------------------------------------
+ 8)EXPORTING DATA FROM CASANDRA TABLE TO CSV FILE.
+cqlsh:/> COPY table_name ( column, ...)
+         FROM ( 'file_name' | STDIN )
+         WITH option = 'value' AND ...
+		 		 
+cqlsh> COPY ESPARK.USERS(ID,ADDRESS,NAME) TO 'C:\adarsh\espark.csv';
+O/P
+Using 3 child processes
+Starting copy of espark.users with columns ['id', 'address', 'name'].
+Processed: 6 rows; Rate:      21 rows/s; Avg. rate:       5 rows/s
+6 rows exported to 1 files in 1.329 seconds.
+-------------------------------------------------------------------------------------------------------------------------------
+9) CRATING THE SPOOL FILE OR LOG FILE 
+CAPTURE ('<file>' | OFF )
+#FOR STARTING 
+cqlsh> CAPTURE 'C:\adarsh\espark.log';
+-----------OTHER CMD EXECUTION-----------
+cqlsh:espark> SELECT * FROM ESPARK.USERS;
+-----------OTHER CMD EXECUTION-----------
+cqlsh> CAPTURE OFF;
+-------------------------------------------------------------------------------------------------------------------------------
+10) ENABLE OR DISABLING THE OUTPUT IN PAGENATION FORM 
+cqlsh>PAGING ON | OFF;
+-------------------------------------------------------------------------------------------------------------------------------
+11) GETTING THE HELP ON ANY QUERY 
+cqlsh>HELP <-|
+
+Documented shell commands:
+===========================
+CAPTURE  CLS          COPY  DESCRIBE  EXPAND  LOGIN   SERIAL  SOURCE   UNICODE
+CLEAR    CONSISTENCY  DESC  EXIT      HELP    PAGING  SHOW    TRACING
+
+CQL help topics:
+================
+AGGREGATES               CREATE_KEYSPACE           DROP_TRIGGER      TEXT
+ALTER_KEYSPACE           CREATE_MATERIALIZED_VIEW  DROP_TYPE         TIME
+ALTER_MATERIALIZED_VIEW  CREATE_ROLE               DROP_USER         TIMESTAMP
+ALTER_TABLE              CREATE_TABLE              FUNCTIONS         TRUNCATE
+ALTER_TYPE               CREATE_TRIGGER            GRANT             TYPES
+ALTER_USER               CREATE_TYPE               INSERT            UPDATE
+APPLY                    CREATE_USER               INSERT_JSON       USE
+ASCII                    DATE                      INT               UUID
+BATCH                    DELETE                    JSON
+BEGIN                    DROP_AGGREGATE            KEYWORDS
+BLOB                     DROP_COLUMNFAMILY         LIST_PERMISSIONS
+BOOLEAN                  DROP_FUNCTION             LIST_ROLES
+COUNTER                  DROP_INDEX                LIST_USERS
+CREATE_AGGREGATE         DROP_KEYSPACE             PERMISSIONS
+CREATE_COLUMNFAMILY      DROP_MATERIALIZED_VIEW    REVOKE
+CREATE_FUNCTION          DROP_ROLE                 SELECT
+CREATE_INDEX             DROP_TABLE                SELECT_JSON
+
+cqlsh> HELP <KEYWORD>
+-------------------------------------------------------------------------------------------------------------------------------
+CASSANDRA DATA TYPE 
+----------------------------
+ascii	    strings	            Represents ASCII character string
+bigint	    bigint	            Represents 64-bit signed long
+blob	    blobs	            Represents arbitrary bytes
+Boolean	    booleans	        Represents true or false
+counter	    integers	        Represents counter column
+decimal	    integers, floats	Represents variable-precision decimal
+double	    integers	        Represents 64-bit IEEE-754 floating point
+float	    integers, floats	Represents 32-bit IEEE-754 floating point
+inet	    strings	            Represents an IP address, IPv4 or IPv6
+int	        integers	        Represents 32-bit signed int
+text	    strings	            Represents UTF8 encoded string
+timestamp	integers, strings	Represents a timestamp
+timeuuid	uuids	            Represents type 1 UUID
+uuid	    uuids	            Represents type 1 or type 4 UUID
+varchar	    strings	            Represents uTF8 encoded string
+varint	    integers	        Represents arbitrary-precision integer
+
+----------------------------
+CASSANDRA Collection Types
+----------------------------
+list	A list is a collection of one or more ordered elements.
+map 	A map is a collection of key-value pairs.
+set	    A set is a collection of one or more elements.
+
+LIST=>
+ CREATE TABLE ESPARK.EMPLOYEE(name text PRIMARY KEY, email list<text>);
+ INSERT INTO ESPARK.EMPLOYEE(name, email) VALUES ('ADARSH',['adarsh@kumar.com','sonu@singh.com']);
+ UPDATE ESPARK.EMPLOYEE SET email = email +['kumar@singh.com'] where name = 'ADARSH';
+ SELECT * FROM ESPARK.EMPLOYEE;
+ 
+SET =>
+ CREATE TABLE ESPARK.EMPLOYEE (name text PRIMARY KEY, mobile set<varint>); 
+ INSERT INTO ESPARK.EMPLOYEE(name, mobile)VALUES ('ADARSH',    {8197416336,9902370891});
+ UPDATE ESPARK.EMPLOYEE SET mobile = mobile + {8094887233} where name = 'ADARSH';
+ SELECT * FROM ESPARK.EMPLOYEE;
+ 
+MAP =>
+  CREATE TABLE ESPARK.CONTACT (name text PRIMARY KEY, address map<text, text>);
+  INSERT INTO ESPARK.CONTACT (name, address) VALUES ('adarsh', {'residence' : 'Bangalore' , 'office' : 'Bangalore' } );  
+  UPDATE ESPARK.CONTACT SET address = address+{'native':'jabalpur'} WHERE name = 'adarsh';
+  SELECT * FROM ESPARK.CONTACT;
+  
+Filtering data in a collection
+-------------------------------
+LIST=>
+cqlsh> SELECT * FROM keyspace.table CONTAINS '<value in list>';
+
+SET =>
+cqlsh> SELECT * FROM keyspace.table CONTAINS '<value in set>';
+
+MAP =>
+ SELECT * FROM keyspace.table CONTAINS KEY '<key in the map>' ;
+  
+-----------------------------
+CASANDRA User-defined datatypes:
+------------------------------
+CREATE TYPE - Creates a user-defined datatype.
+ALTER TYPE - Modifies a user-defined datatype.
+DROP TYPE - Drops a user-defined datatype.
+DESCRIBE TYPE - Describes a user-defined datatype.
+DESCRIBE TYPES - Describes user-defined datatypes
+
+Creating a User-defined Data Type
+-----------------------------------
+CREATE TYPE <keyspace name>. <data typename> ( variable1, variable2).
+cqlsh>CREATE TYPE ESPARK.EMPLOYEE ( EMPID int,EMPNAME text,PHONE set<int>);
+
+DESCRIBE Type
+-----------------------------------
+cqlsh>DESCRIBE TYPE ESPARK.EMPLOYEE;
+	  
+Altering a User-defined Data Type 
+-------------------------------------
+	  
+@ADDING NEW FIELD TO CUSTOM DATA TYPE
+ALTER TYPE typename ADD field_name field_type; 
+cqlsh>ALTER TYPE ESPARK.EMPLOYEE ADD EMAIL text;	  
+
+@RENAMING THE FIELD NAME IN CUSTOM DATA TYPE
+ALTER TYPE typename RENAME existing_name TO new_name;
+cqlsh>ALTER TYPE ESPARK.EMPLOYEE RENAME PHONE TO CONTACTNO;
+
+@DELTING THE USER DEFINE DATAYTPE
+DEOP TYPE;
+cqlsh>drop type ESPARK.EMPLOYEE;
+-------------------------------------------------------------------------------------------------------------------------------
+KEYSPACE CREATION 
+------------------------------
+CREATE KEYSPACE <identifier> WITH <properties>
+
+cqlsh>CREATE KEYSPACE <KEYSPACE_NAME> 
+       WITH replication = {'class': ‘Strategy name’, 'replication_factor' : ‘No.Of   replicas’};
+
+cqlsh>CREATE KEYSPACE <KEYSPACE_NAME> 
+      WITH replication = {'class': ‘Strategy name’, 'replication_factor' : ‘No.Of  replicas’} AND durable_writes = ‘Boolean value’;
+
+@Replication=Replica Placement strategy and the number of replicas wanted.
+#Simple Strategy'	            Specifies a simple replication factor for the cluster.
+#Network Topology Strategy	     Using this option, you can set the replication factor for each data-center independently.
+#Old Network Topology Strategy	This is a legacy replication strategy.
+
+@Durable_writes=By default, the durable_writes properties of a table is set to true, however it can be set to false. 
+                You cannot set this property to simplex strategy
+	  
+------------------------------	  
+DESCRIBE KEYSPACE
+------------------------------	 
+DESCRIBE <KEYSPACE_NAME>; 
+cqlsh> DESCRIBE espark;
+
+------------------------------	  
+KEYSPACE USING 
+------------------------------	  
+USE <KEYSPACE_NAME>;
+cqlsh>USER 	esaprk;
+
+-------------------------------
+ALTERING THE KEYSPACE
+-------------------------------
+ALTER KEYSPACE <identifier> WITH <properties> 
+cqlsh>ALTER KEYSPACE <KEYSPACE_NAME> 
+      WITH replication = {'class': ‘Strategy name’, 'replication_factor' : ‘No.Of  replicas’};
+	  	  
+--------------------------------	  
+DROP KEYSPACE
+--------------------------------	  
+DROP KEYSPACE <identifier>	  
+cqlsh>DROP KEYSPACE espark;
+
+-------------------------------------------------------------------------------------------------------------------------------
+12)TABLE CREATIONS 
+cqlsh>CREATE (TABLE | COLUMNFAMILY) <tablename>
+      ('<column-definition>' , '<column-definition>')
+      (WITH <option> AND <option>)
+
+cqlsh>CREATE TABLE tablename(
+      column1 name datatype PRIMARYKEY
+      ,column2 name data type
+      ,column3 name data type  
+     );	 
+OR
+cqlsh>CREATE TABLE tablename(
+       column1 name datatype
+      ,column2 name data type
+      ,column3 name data type
+      ,PRIMARY KEY (column1)	  
+     );	 
+	  
+-------------------------------------------------------------------------------------------------------------------------------
+13)ALTER TABLE
+   ALTER (TABLE | COLUMNFAMILY) <tablename> <instruction>
+  
+cqlsh>ALTER TABLE <table name>
+      ADD  <new column> datatype;  
+	  
+cqlsh>ALTER TABLE <table name>
+      DROP  <new column> datatype;  	  
+-------------------------------------------------------------------------------------------------------------------------------
+14)DROP TABLE 
+cqlsh>DROP TABLE <tablename>;
+-------------------------------------------------------------------------------------------------------------------------------
+15)TRUNCATE TABLE 
+cqlsh>TRUNCATE <tablename>
+-------------------------------------------------------------------------------------------------------------------------------
+16)INDEX CREATION ON TABLE 
+cqlsh>CREATE INDEX <identifier> ON <tablename>;
+-------------------------------------------------------------------------------------------------------------------------------
+17)DROP INDEX FROM TABLE
+cqlsh>DROP INDEX <identifier>;
+-------------------------------------------------------------------------------------------------------------------------------
+18)CASSANDRA BATCH EXECUTION 
+cqlsh> BEGIN BATCH
+       <insert-stmt>/ <update-stmt>/ <delete-stmt>
+       <insert-stmt>/ <update-stmt>/ <delete-stmt>
+       <insert-stmt>/ <update-stmt>/ <delete-stmt>
+       APPLY BATCH
+-------------------------------------------------------------------------------------------------------------------------------
+19)INSERT DATA TO TABLES
+cqlsh>INSERT INTO <tablename>(<column1 name>, <column2 name>....)
+       VALUES (<value1>, <value2>....)
+       USING <option>
+-------------------------------------------------------------------------------------------------------------------------------
+20)UPDATING TABLE DATA 
+cqlsh>UPDATE <tablename>
+      SET <column name> = <new value>
+          <column name> = <value>
+      WHERE <condition>
+-------------------------------------------------------------------------------------------------------------------------------
+21)READING DATA FROMT TABLES
+cqlsh>SELECT FROM <tablename>;
+-------------------------------------------------------------------------------------------------------------------------------
+22)DELETING TABLE DATA 
+cqlsh>DELETE FROM <identifier> WHERE <condition>;
+-------------------------------------------------------------------------------------------------------------------------------
+23)CREATE TRIGGER
+cqlsh>CREATE TRIGGER IF NOT EXISTS trigger_name ON table_name
+      USING 'java_class'
+	  
+NOTE:copy the java class file in the form of jar file in the 
+     below mentioned location.
+DRIVE:\apache-cassandra-3.5\conf\triggers  
+-------------------------------------------------------------------------------------------------------------------------------
+24)DROPING TRIGGER
+cqlsh>DROP TRIGGER IF EXISTS <trigger_name> ON <table_name>	  
+-------------------------------------------------------------------------------------------------------------------------------
+25)TRANSACTIONAL QUERY 
+
+cqlsh>INSERT INTO ESPARK.USERS (ID, NAME, ADDRESS)
+  VALUES (200, 'USHA SINGH', 'INDIA')
+  IF NOT EXISTS;
+  
+cqlsh>  UPDATE ESPARK.USERS
+  SET ADDRESS = 'US'
+  WHERE ID = 200
+  IF ADDRESS = 'INDIA';  
+
+	 
